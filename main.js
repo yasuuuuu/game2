@@ -5,6 +5,8 @@ var mouse = new Point();
 var ctx;
 var fire = false;
 var counter = 0;
+var message;
+var score = 0;
 
 var CHARA_COLOR = 'rgba(0, 0, 255, 0.75)';
 var CHARA_SHOT_COLOR = 'rgba(0, 255, 0, 0.75)';
@@ -13,6 +15,9 @@ var ENEMY_COLOR = 'rgba(255, 0, 0, 0.75)';
 var ENEMY_MAX_COUNT = 10;
 var ENEMY_SHOT_COLOR = 'rgba(255, 0, 255, 0.75)';
 var ENEMY_SHOT_MAX_COUNT = 100;
+var BOSS_COLOR = 'rgba(128, 128, 128, 0.75)';
+var BOSS_BIT_COLOR = 'rgba(64, 64, 64, 0.75)';
+var BOSS_BIT_COUNT = 5;
 
 window.onload = function() {
 
@@ -30,6 +35,9 @@ window.onload = function() {
   window.addEventListener('keydown', keyDown, true);
 
   info = document.getElementById('info');
+
+  mouse.x = screenCanvas.width / 2;
+  mouse.y = screenCanvas.height - 20;
 
   var chara = new Character();
   chara.init(10);
@@ -49,10 +57,14 @@ window.onload = function() {
     enemyShot[i] = new EnemyShot();
   }
 
+  var boss = new Boss();
+  var bit = new Array(BOSS_BIT_COUNT);
+  for(i = 0; i < BOSS_BIT_COUNT; i++) {
+    bit[i] = new Bit();
+  }
+
   (function(){
     counter ++;
-
-    info.innerHTML = mouse.x + ' : ' + mouse.y;
 
     if(fire){
       for(i = 0; i < CHARA_SHOT_MAX_COUNT; i++){
@@ -108,68 +120,95 @@ window.onload = function() {
     ctx.fillStyle = CHARA_SHOT_COLOR;
     ctx.fill();
 
-    ctx.beginPath();
-    for(i = 0; i < ENEMY_MAX_COUNT; i++){
-      if(enemy[i].alive){
-        enemy[i].move();
+    switch(true) {
+      case counter < 70:
+        message = 'READY...';
+        break;
+      case counter < 100:
+        message = 'Go!!';
+        break;
+      default:
+        message = '';
 
-        ctx.arc(
-          enemy[i].position.x,
-          enemy[i].position.y,
-          enemy[i].size,
-          0, Math.PI * 2, false
-        );
+        ctx.beginPath();
+        for(i = 0; i < ENEMY_MAX_COUNT; i++){
+          if(enemy[i].alive){
+            enemy[i].move();
 
-        if(enemy[i].param % 30 === 0) {
-          for(j = 0; j < ENEMY_SHOT_MAX_COUNT; j++) {
-            if(!enemyShot[j].alive) {
-              p = enemy[i].position.distance(chara.position);
-              p.normalize();
-              enemyShot[j].set(enemy[i].position, p, 5, 5);
+            ctx.arc(
+              enemy[i].position.x,
+              enemy[i].position.y,
+              enemy[i].size,
+              0, Math.PI * 2, false
+            );
 
-              break;
+            if(enemy[i].param % 30 === 0) {
+              for(j = 0; j < ENEMY_SHOT_MAX_COUNT; j++) {
+                if(!enemyShot[j].alive) {
+                  p = enemy[i].position.distance(chara.position);
+                  p.normalize();
+                  enemyShot[j].set(enemy[i].position, p, 5, 5);
+
+                  break;
+                }
+              }
+            }
+
+            ctx.closePath();
+          }
+        }
+        ctx.fillStyle = ENEMY_COLOR;
+        ctx.fill();
+
+        ctx.beginPath();
+        for(i = 0; i < ENEMY_SHOT_MAX_COUNT; i++){
+          if(enemyShot[i].alive){
+            enemyShot[i].move();
+
+            ctx.arc(
+              enemyShot[i].position.x,
+              enemyShot[i].position.y,
+              enemyShot[i].size,
+              0, Math.PI * 2, false
+            );
+
+            ctx.closePath();
+          }
+        }
+        ctx.fillStyle = ENEMY_SHOT_COLOR;
+        ctx.fill();
+
+        for(i = 0; i < CHARA_SHOT_MAX_COUNT; i++) {
+          if(charaShot[i].alive) {
+            for(j = 0; j < ENEMY_MAX_COUNT; j++) {
+              if(enemy[j].alive) {
+                p = charaShot[i].position.distance(enemy[j].position);
+                if(p.length() < enemy[j].size) {
+                  score++;
+                  charaShot[i].alive = false;
+                  enemy[j].alive = false;
+                  break;
+                }
+              }
             }
           }
         }
 
-        ctx.closePath();
-      }
-    }
-    ctx.fillStyle = ENEMY_COLOR;
-    ctx.fill();
-
-    ctx.beginPath();
-    for(i = 0; i < ENEMY_SHOT_MAX_COUNT; i++){
-      if(enemyShot[i].alive){
-        enemyShot[i].move();
-
-        ctx.arc(
-          enemyShot[i].position.x,
-          enemyShot[i].position.y,
-          enemyShot[i].size,
-          0, Math.PI * 2, false
-        );
-
-        ctx.closePath();
-      }
-    }
-    ctx.fillStyle = ENEMY_SHOT_COLOR;
-    ctx.fill();
-
-    for(i = 0; i < CHARA_SHOT_MAX_COUNT; i++) {
-      if(charaShot[i].alive) {
-        for(j = 0; j < ENEMY_MAX_COUNT; j++) {
-          if(enemy[j].alive) {
-            p = charaShot[i].position.distance(enemy[j].position);
-            if(p.length() < enemy[j].size) {
-              charaShot[i].alive = false;
-              enemy[j].alive = false;
+        for(i = 0; i < ENEMY_SHOT_MAX_COUNT; i++) {
+          if(enemyShot[i].alive) {
+            p = chara.position.distance(enemyShot[i].position);
+            if(p.length() < chara.size) {
+              chara.alive = false;
+              run = false;
+              message = 'GAME OVER';
               break;
             }
           }
         }
-      }
+        break;
     }
+
+    info.innerHTML = 'SCORE: ' + (score * 100) + ' ' + message;
 
     if(run){ setTimeout(arguments.callee, fps); }
   })();
