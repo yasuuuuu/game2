@@ -11,6 +11,8 @@ var CHARA_SHOT_COLOR = 'rgba(0, 255, 0, 0.75)';
 var CHARA_SHOT_MAX_COUNT = 10;
 var ENEMY_COLOR = 'rgba(255, 0, 0, 0.75)';
 var ENEMY_MAX_COUNT = 10;
+var ENEMY_SHOT_COLOR = 'rgba(255, 0, 255, 0.75)';
+var ENEMY_SHOT_MAX_COUNT = 100;
 
 window.onload = function() {
 
@@ -40,6 +42,11 @@ window.onload = function() {
   var enemy = new Array(ENEMY_MAX_COUNT);
   for(i = 0; i < ENEMY_MAX_COUNT; i++) {
     enemy[i] = new Enemy();
+  }
+
+  var enemyShot = new Array(ENEMY_SHOT_MAX_COUNT);
+  for(i = 0; i < ENEMY_SHOT_MAX_COUNT; i++) {
+    enemyShot[i] = new EnemyShot();
   }
 
   (function(){
@@ -101,7 +108,6 @@ window.onload = function() {
     ctx.fillStyle = CHARA_SHOT_COLOR;
     ctx.fill();
 
-
     ctx.beginPath();
     for(i = 0; i < ENEMY_MAX_COUNT; i++){
       if(enemy[i].alive){
@@ -113,11 +119,57 @@ window.onload = function() {
           enemy[i].size,
           0, Math.PI * 2, false
         );
+
+        if(enemy[i].param % 30 === 0) {
+          for(j = 0; j < ENEMY_SHOT_MAX_COUNT; j++) {
+            if(!enemyShot[j].alive) {
+              p = enemy[i].position.distance(chara.position);
+              p.normalize();
+              enemyShot[j].set(enemy[i].position, p, 5, 5);
+
+              break;
+            }
+          }
+        }
+
         ctx.closePath();
       }
     }
     ctx.fillStyle = ENEMY_COLOR;
     ctx.fill();
+
+    ctx.beginPath();
+    for(i = 0; i < ENEMY_SHOT_MAX_COUNT; i++){
+      if(enemyShot[i].alive){
+        enemyShot[i].move();
+
+        ctx.arc(
+          enemyShot[i].position.x,
+          enemyShot[i].position.y,
+          enemyShot[i].size,
+          0, Math.PI * 2, false
+        );
+
+        ctx.closePath();
+      }
+    }
+    ctx.fillStyle = ENEMY_SHOT_COLOR;
+    ctx.fill();
+
+    for(i = 0; i < CHARA_SHOT_MAX_COUNT; i++) {
+      if(charaShot[i].alive) {
+        for(j = 0; j < ENEMY_MAX_COUNT; j++) {
+          if(enemy[j].alive) {
+            p = charaShot[i].position.distance(enemy[j].position);
+            if(p.length() < enemy[j].size) {
+              charaShot[i].alive = false;
+              enemy[j].alive = false;
+              break;
+            }
+          }
+        }
+      }
+    }
 
     if(run){ setTimeout(arguments.callee, fps); }
   })();
