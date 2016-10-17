@@ -1,0 +1,58 @@
+*.rbc
+*.swp
+.vault
+capybara-*.html
+.rspec
+/log/*log*
+/tmp
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/public/system
+/coverage/
+/spec/tmp
+**.orig
+rerun.txt
+pickle-email-*.html
+
+# python の一時キャッシュファイル
+*.pyc
+
+
+## Environment normalisation:
+/.bundle
+/vendor/bundle
+
+# if using bower-rails ignore default bower_components path bower.json files
+/vendor/assets/bower_components
+*.bowerrc
+bower.json
+
+# Ignore pow environment settings
+.powenv
+.vagrant
+*.iso
+*.box
+*.vdi
+
+orchestration/.vagrant
+
+#RubyMineの環境ファイル
+/.idea
+.DS_Store
+
+data/*
+
+config/settings.local.yml
+config/settings/*.local.yml
+config/environments/*.local.yml
+config/google.json
+
+# dotenvのローカル定義ファイル
+.env.local
+
+# Yard関連のファイル
+.yardoc
+doc/
+
+# sassの一時ファイル
+.sass-cache
