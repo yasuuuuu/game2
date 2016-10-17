@@ -76,7 +76,7 @@ window.onload = function() {
       fire = false;
     }
 
-    if(counter % 100 === 0) {
+    if(counter % 100 === 0 && counter < 1000) {
       for(i = 0; i < ENEMY_MAX_COUNT; i++) {
         if(!enemy[i].alive) {
           j = (counter % 200) / 100;
@@ -89,6 +89,15 @@ window.onload = function() {
 
           break;
         }
+      }
+    } else if(counter === 1000) {
+      p.x = screenCanvas.width / 2;
+      p.y = -80;
+      boss.set(p, 50, 30);
+
+      for(i = 0; i < BOSS_BIT_COUNT; i++) {
+        j = 360 / BOSS_BIT_COUNT;
+        bit[i].set(boss, 15, 5, i*j);
       }
     }
 
@@ -178,6 +187,49 @@ window.onload = function() {
         ctx.fillStyle = ENEMY_SHOT_COLOR;
         ctx.fill();
 
+        ctx.beginPath();
+        if(boss.alive) {
+          boss.move();
+
+          ctx.arc(
+            boss.position.x,
+            boss.position.y,
+            boss.size,
+            0, Math.PI * 2, false
+          );
+
+          ctx.closePath()
+        }
+        ctx.fillStyle = BOSS_COLOR;
+        ctx.fill();
+
+        ctx.beginPath();
+        for(i = 0; i < BOSS_BIT_COUNT; i++) {
+          if(bit[i].alive) {
+            bit[i].move();
+
+            ctx.arc(
+              bit[i].position.x,
+              bit[i].position.y,
+              bit[i].size,
+              0, Math.PI * 2, false
+            );
+
+            if(bit[i].param % 25 === 0) {
+              for(j = 0; j < ENEMY_SHOT_MAX_COUNT; j++) {
+                if(!enemyShot[j].alive) {
+                  p = bit[i].position.distance(chara.position);
+                  p.normalize();
+                  enemyShot[j].set(bit[i].position, p, 4, 1.5);
+                }
+              }
+            }
+            ctx.closePath();
+          }
+        }
+        ctx.fillStyle = BOSS_BIT_COLOR;
+        ctx.fill();
+
         for(i = 0; i < CHARA_SHOT_MAX_COUNT; i++) {
           if(charaShot[i].alive) {
             for(j = 0; j < ENEMY_MAX_COUNT; j++) {
@@ -188,6 +240,35 @@ window.onload = function() {
                   charaShot[i].alive = false;
                   enemy[j].alive = false;
                   break;
+                }
+              }
+            }
+
+            for(j = 0; j < BOSS_BIT_COUNT; j++) {
+              if(bit[j].alive) {
+                p = bit[j].position.distance(charaShot[i].position);
+                if(p.length() < bit[j].size) {
+                  bit[j].life--;
+                  charaShot[i].alive = false;
+                  if(bit[j].life < 0) {
+                    bit[j].alive = false;
+                    score += 3;
+                  }
+                  break;
+                }
+              }
+            }
+
+            if(boss.alive) {
+              p = boss.position.distance(charaShot[i].position);
+              if(p.length() < boss.size) {
+                boss.life--;
+                charaShot[i].alive = false;
+
+                if(boss.life < 0) {
+                  score += 10;
+                  run = false;
+                  message = 'CLEAR!';
                 }
               }
             }
